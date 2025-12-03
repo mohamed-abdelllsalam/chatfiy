@@ -1,8 +1,14 @@
+import 'package:chatify/components/group_details_sheet.dart';
+import 'package:chatify/components/group_tile.dart';
 import 'package:chatify/components/my_drawer.dart';
 import 'package:chatify/components/user_tile.dart';
+import 'package:chatify/models/group.dart';
 import 'package:chatify/pages/chat_page.dart';
+import 'package:chatify/pages/create_group_page.dart';
+import 'package:chatify/pages/group_chat_page.dart';
 import 'package:chatify/services/auth/auth_service.dart';
 import 'package:chatify/services/chat/chat_services.dart';
+import 'package:chatify/services/group/group_service.dart';
 import 'package:chatify/utils/app_styls.dart';
 import 'package:flutter/material.dart';
 
@@ -10,15 +16,33 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final ChatServices _chatServices = ChatServices();
   final AuthService _authService = AuthService();
+  final GroupService _groupService = GroupService();
+  late final TabController _tabController;
 
-  void logout() async {
-    await _authService.signOut();
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -32,14 +56,48 @@ class _HomePageState extends State<HomePage> {
           'Home',
           style: AppStyles.styleSemiBold20(context),
         ),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Chats'),
+            Tab(text: 'Groups'),
+          ],
+        ),
       ),
       drawer: const MyDrawer(),
-      body: _buildUserList(),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildUserList(),
+          _buildGroupList(),
+        ],
+      ),
+      floatingActionButton: _tabController.index == 1
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final created = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateGroupPage(),
+                  ),
+                );
+                if (created == true && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Group created successfully.'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.group_add),
+              label: const Text('New group'),
+            )
+          : null,
     );
   }
 
   Widget _buildUserList() {
-    return StreamBuilder(
+    return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _chatServices.getUsersStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -53,9 +111,10 @@ class _HomePageState extends State<HomePage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!snapshot.hasData ||
-            snapshot.data == null ||
-            snapshot.data!.isEmpty) {
+
+        final users = snapshot.data ?? const <Map<String, dynamic>>[];
+
+        if (users.isEmpty) {
           return Center(
             child: Text(
               'No users available',
@@ -65,33 +124,97 @@ class _HomePageState extends State<HomePage> {
         }
 
         return ListView.builder(
-          itemCount: snapshot.data!.length,
+          itemCount: users.length,
           itemBuilder: (context, index) {
-            return _buildUserListItem(snapshot.data![index], context);
+            return _buildUserListItem(users[index], context);
           },
         );
       },
     );
   }
 
+  Widget _buildGroupList() {
+    return StreamBuilder<List<Group>>(
+      stream: _groupService.streamGroupsForCurrentUser(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading groups',
+              style: AppStyles.styleRegular16(context),
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final groups = snapshot.data ?? const <Group>[];
+        if (groups.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Create a group to start a shared conversation with multiple friends.',
+                style: AppStyles.styleRegular16(context),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            final group = groups[index];
+            return GroupTile(
+              group: group,
+              onTap: () => _openGroupChat(group),
+              onDetailsTap: () => _showGroupDetails(group),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showGroupDetails(Group group) {
+    return showGroupDetailsSheet(
+      context: context,
+      groupService: _groupService,
+      group: group,
+    );
+  }
+
+  void _openGroupChat(Group group) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => GroupChatPage(group: group),
+      ),
+    );
+  }
+
   Widget _buildUserListItem(
-      Map<String, dynamic> userData, BuildContext context) {
+    Map<String, dynamic> userData,
+    BuildContext context,
+  ) {
     final currentUserEmail = _authService.getCurrentUser()?.email;
 
-    if (userData["email"] == currentUserEmail) {
-      return const SizedBox(); // Hide current user from list
+    if (userData['email'] == currentUserEmail) {
+      return const SizedBox.shrink();
     }
 
     return UserTile(
-      text: userData["name"] ?? userData["email"],
+      text: userData['name'] ?? userData['email'],
       textStyle: AppStyles.styleMedium16(context),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChatPage(
-              receiverEmail: userData["email"],
-              receiverID: userData["uid"],
+              receiverEmail: userData['email'],
+              receiverID: userData['uid'],
             ),
           ),
         );
