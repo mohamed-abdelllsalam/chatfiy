@@ -8,12 +8,19 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
-      child: Chatify(),
-    ),
-  );
+  runApp(const _AppBootstrap());
+}
+
+class _AppBootstrap extends StatelessWidget {
+  const _AppBootstrap();
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const Chatify(),
+    );
+  }
 }
 
 class Chatify extends StatelessWidget {
@@ -21,12 +28,10 @@ class Chatify extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: const SplashView(),
-        theme: Provider.of<ThemeProvider>(context).themeData,
-      ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const SplashView(),
+      theme: Provider.of<ThemeProvider>(context).themeData,
     );
   }
 }

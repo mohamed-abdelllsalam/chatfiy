@@ -26,14 +26,14 @@ class _SplashViewBodyState extends State<SplashViewBody>
   @override
   void initState() {
     super.initState();
-    intSlidingAnimation();
-    navigateToHome();
+    _initSlidingAnimation();
+    _navigateToHome();
   }
 
   @override
   void dispose() {
-    super.dispose();
     animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -42,7 +42,7 @@ class _SplashViewBodyState extends State<SplashViewBody>
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Image(
+        const Image(
           image: AssetImage('assets/icon/icon.png'),
           height: 200,
         ),
@@ -56,7 +56,7 @@ class _SplashViewBodyState extends State<SplashViewBody>
     );
   }
 
-  void intSlidingAnimation() {
+  void _initSlidingAnimation() {
     animationController = AnimationController(
       vsync: this,
       duration: const Duration(
@@ -70,17 +70,14 @@ class _SplashViewBodyState extends State<SplashViewBody>
     animationController.forward();
   }
 
-  void navigateToHome() {
-    Future.delayed(
-      const Duration(seconds: 2),
-      () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AuthGate(),
-          ),
-        );
-      },
+  Future<void> _navigateToHome() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const AuthGate(),
+      ),
+      (route) => false,
     );
   }
 }

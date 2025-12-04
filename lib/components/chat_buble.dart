@@ -43,7 +43,7 @@ class ChatBuble extends StatelessWidget {
               child: Text(
                 senderName!,
                 style: TextStyle(
-                  color: textColor.withOpacity(0.75),
+                  color: textColor.withValues(alpha: .75),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),

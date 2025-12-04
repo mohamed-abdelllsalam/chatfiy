@@ -52,9 +52,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         Navigator.of(context).pop(true);
       }
     } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create group: $error')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create group: $error')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);

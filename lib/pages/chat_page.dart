@@ -96,7 +96,6 @@ class _ChatPageState extends State<ChatPage> {
         });
       }
     } catch (e) {
-      print('Error fetching user name: $e');
       setState(() {
         receiverName = null;
         isLoading = false;

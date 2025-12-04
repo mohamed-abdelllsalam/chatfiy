@@ -75,14 +75,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       floatingActionButton: _tabController.index == 1
           ? FloatingActionButton.extended(
               onPressed: () async {
-                final created = await Navigator.push<bool>(
-                  context,
+                final navigator = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
+                final created = await navigator.push<bool>(
                   MaterialPageRoute(
-                    builder: (context) => const CreateGroupPage(),
+                    builder: (_) => const CreateGroupPage(),
                   ),
                 );
-                if (created == true && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (!mounted) return;
+                if (created == true) {
+                  messenger.showSnackBar(
                     const SnackBar(
                       content: Text('Group created successfully.'),
                     ),
