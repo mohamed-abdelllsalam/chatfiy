@@ -6,6 +6,11 @@ import 'package:chatify/models/group_message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// A service that provides group chat functionalities.
+///
+/// This service is responsible for handling group chat messaging,
+/// including creating groups, sending and receiving messages, and fetching
+/// group information.
 class GroupService {
   GroupService()
       : _firestore = FirebaseFirestore.instance,
@@ -13,9 +18,12 @@ class GroupService {
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+
+  /// A reference to the "groups" collection in Firestore.
   CollectionReference<Map<String, dynamic>> get _groupsCollection =>
       _firestore.collection('groups');
 
+  /// Returns a stream of groups that the current user is a member of.
   Stream<List<Group>> streamGroupsForCurrentUser() {
     final userId = _auth.currentUser?.uid;
     if (userId == null) {
@@ -38,6 +46,7 @@ class GroupService {
     });
   }
 
+  /// Creates a new group with the given name, description, and members.
   Future<void> createGroup({
     required String name,
     required String description,
@@ -67,6 +76,7 @@ class GroupService {
     });
   }
 
+  /// Fetches the profiles of the members of a group.
   Future<List<AppUser>> fetchGroupMembers(List<String> memberIds) async {
     if (memberIds.isEmpty) {
       return const <AppUser>[];
@@ -87,6 +97,7 @@ class GroupService {
     return results;
   }
 
+  /// Returns a stream of a group by its ID.
   Stream<Group?> streamGroupById(String groupId) {
     return _groupsCollection.doc(groupId).snapshots().map((doc) {
       if (!doc.exists) {
@@ -96,6 +107,7 @@ class GroupService {
     });
   }
 
+  /// Returns a stream of messages for a specific group.
   Stream<List<GroupMessage>> streamGroupMessages(String groupId) {
     return _groupsCollection
         .doc(groupId)
@@ -107,6 +119,7 @@ class GroupService {
             .toList(growable: false));
   }
 
+  /// Sends a message to a specific group.
   Future<void> sendGroupMessage({
     required String groupId,
     required String message,

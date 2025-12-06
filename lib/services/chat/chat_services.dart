@@ -2,11 +2,15 @@ import 'package:chatify/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// A service that provides chat functionalities.
+///
+/// This service is responsible for handling one-on-one chat messaging,
+/// including sending and receiving messages, and fetching the list of users.
 class ChatServices {
-// get instance of firestore
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // get user stream
+
+  /// Returns a stream of all users from the "Users" collection in Firestore.
   Stream<List<Map<String, dynamic>>> getUsersStream() {
     return _firestore.collection("Users").snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -16,6 +20,10 @@ class ChatServices {
     });
   }
 
+  /// Sends a message to a specific user.
+  ///
+  /// The message is stored in a chat room, which is identified by a unique
+  /// ID generated from the current user's ID and the receiver's ID.
   Future<void> sendMessage(String reciverId, message) async {
     final String currentUserId = _auth.currentUser!.uid;
     final String currentUserEmail = _auth.currentUser!.email!;
@@ -40,6 +48,10 @@ class ChatServices {
         .add(newMessage.toMap());
   }
 
+  /// Returns a stream of messages for a specific chat room.
+  ///
+  /// The chat room is identified by the unique ID generated from the two
+  /// user IDs.
   Stream<QuerySnapshot> getMessages(String userID, otherUserID) {
     List<String> ids = [userID, otherUserID];
     ids.sort();
