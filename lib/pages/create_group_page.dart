@@ -2,6 +2,7 @@ import 'package:chatify/services/auth/auth_service.dart';
 import 'package:chatify/services/chat/chat_services.dart';
 import 'package:chatify/services/group/group_service.dart';
 import 'package:chatify/utils/app_styls.dart';
+import 'package:chatify/utils/validators.dart';
 import 'package:flutter/material.dart';
 
 class CreateGroupPage extends StatefulWidget {
@@ -83,12 +84,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               labelText: 'Group name',
               border: OutlineInputBorder(),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Group name is required.';
-              }
-              return null;
-            },
+            validator: Validators.groupName,
           ),
           const SizedBox(height: 16),
           TextFormField(

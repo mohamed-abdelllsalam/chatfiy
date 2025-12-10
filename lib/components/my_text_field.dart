@@ -7,19 +7,25 @@ class MyTextField extends StatelessWidget {
     required this.obscureText,
     required this.controller,
     this.focusNode,
+    this.validator,
+    this.suffixIcon,
   });
   final String hintText;
   final bool obscureText;
   final TextEditingController controller;
   final FocusNode? focusNode;
+  final String? Function(String?)? validator;
+  final Widget? suffixIcon;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         focusNode: focusNode,
         obscureText: obscureText,
+        validator: validator,
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
@@ -37,6 +43,7 @@ class MyTextField extends StatelessWidget {
           hintStyle: TextStyle(
             color: Theme.of(context).colorScheme.primary,
           ),
+          suffixIcon: suffixIcon,
         ),
       ),
     );

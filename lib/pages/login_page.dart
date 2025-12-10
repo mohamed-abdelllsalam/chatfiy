@@ -1,7 +1,9 @@
 import 'package:chatify/components/my_button.dart';
 import 'package:chatify/components/my_text_field.dart';
+import 'package:chatify/components/password_validation_view.dart';
 import 'package:chatify/services/auth/auth_service.dart';
 import 'package:chatify/utils/app_styls.dart';
+import 'package:chatify/utils/validators.dart';
 import 'package:flutter/material.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,9 +15,19 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _passwordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(() {
+      setState(() {});
+    });
+  }
 
   @override
   void dispose() {
@@ -24,29 +36,15 @@ class LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // Email validation
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email);
-  }
-
   // Login function
   Future<void> login() async {
-    final authService = AuthService();
-
-    // Check if fields are empty
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showErrorDialog("Please fill in all fields.");
-      return;
-    }
-
-    // Validate email format
-    if (!_isValidEmail(_emailController.text)) {
-      _showErrorDialog("Please enter a valid email address.");
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isLoading = true);
+
+    final authService = AuthService();
 
     try {
       await authService.signInWithEmailPassword(
@@ -88,56 +86,78 @@ class LoginPageState extends State<LoginPage> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.message,
-                size: 60,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 50),
-              Text(
-                "Welcome back! We've missed you 👋",
-                style: AppStyles.styleMedium16(context),
-              ),
-              const SizedBox(height: 25),
-              MyTextField(
-                hintText: 'Email',
-                obscureText: false,
-                controller: _emailController,
-              ),
-              const SizedBox(height: 10),
-              MyTextField(
-                hintText: 'Password',
-                obscureText: true,
-                controller: _passwordController,
-              ),
-              const SizedBox(height: 25),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : MyButton(
-                      text: 'Login',
-                      onTap: login,
+          child: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.message,
+                  size: 60,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: 50),
+                Text(
+                  "Welcome back! We've missed you 👋",
+                  style: AppStyles.styleMedium16(context),
+                ),
+                const SizedBox(height: 25),
+                MyTextField(
+                  hintText: 'Email',
+                  obscureText: false,
+                  controller: _emailController,
+                  validator: Validators.email,
+                ),
+                const SizedBox(height: 10),
+                MyTextField(
+                  hintText: 'Password',
+                  obscureText: !_passwordVisible,
+                  controller: _passwordController,
+                  validator: Validators.password,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
-              const SizedBox(height: 25),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Not a member? ',
-                    style: AppStyles.styleRegular14(context),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
                   ),
-                  GestureDetector(
-                    onTap: widget.onTap,
-                    child: Text(
-                      'Register now',
-                      style: AppStyles.styleSemiBold16(context),
+                ),
+                const SizedBox(height: 10),
+                PasswordValidationView(
+                  password: _passwordController.text,
+                ),
+                const SizedBox(height: 25),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : MyButton(
+                        text: 'Login',
+                        onTap: login,
+                      ),
+                const SizedBox(height: 25),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Not a member? ',
+                      style: AppStyles.styleRegular14(context),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    GestureDetector(
+                      onTap: widget.onTap,
+                      child: Text(
+                        'Register now',
+                        style: AppStyles.styleSemiBold16(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
