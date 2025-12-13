@@ -4,6 +4,7 @@ import 'package:chatify/services/auth/auth_service.dart';
 import 'package:chatify/services/chat/chat_services.dart';
 import 'package:chatify/utils/app_styls.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 
 class ChatPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class _ChatPageState extends State<ChatPage> {
   FocusNode focusNode = FocusNode();
   String? receiverName;
   bool isLoading = true;
+  bool showEmojiPicker = false;
 
   @override
   void initState() {
@@ -36,6 +38,9 @@ class _ChatPageState extends State<ChatPage> {
 
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
+        setState(() {
+          showEmojiPicker = false;
+        });
         Future.delayed(
           const Duration(milliseconds: 500),
           () => scrollDown(),
@@ -121,6 +126,9 @@ class _ChatPageState extends State<ChatPage> {
       body: GestureDetector(
         onTap: () {
           FocusScope.of(context).unfocus();
+          setState(() {
+            showEmojiPicker = false;
+          });
         },
         child: Column(
           children: [
@@ -182,34 +190,56 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildUserInput() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 30),
-      child: Row(
-        children: [
-          Expanded(
-            child: MyTextField(
-              hintText: 'Type a message',
-              obscureText: false,
-              controller: _messageController,
-              focusNode: focusNode,
-            ),
-          ),
-          Container(
-            decoration: const BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
-            ),
-            margin: const EdgeInsets.only(right: 25),
-            child: IconButton(
-              onPressed: sendMessage,
-              icon: const Icon(
-                Icons.arrow_upward,
-                color: Colors.white,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 30),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    showEmojiPicker = !showEmojiPicker;
+                    focusNode.unfocus();
+                  });
+                },
+                icon: const Icon(Icons.emoji_emotions_outlined),
               ),
-            ),
+              Expanded(
+                child: MyTextField(
+                  hintText: 'Type a message',
+                  obscureText: false,
+                  controller: _messageController,
+                  focusNode: focusNode,
+                ),
+              ),
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                margin: const EdgeInsets.only(right: 25),
+                child: IconButton(
+                  onPressed: sendMessage,
+                  icon: const Icon(
+                    Icons.arrow_upward,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (showEmojiPicker)
+          SizedBox(
+            height: 250,
+            child: EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                _messageController.text += emoji.emoji;
+              },
+            ),
+          )
+      ],
     );
   }
 }
